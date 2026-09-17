@@ -1,0 +1,12 @@
+SELLER OS — DOMAIN SETUP
+
+Da completare quando viene scelto/acquistato il dominio definitivo:
+
+1. aggiungere <link rel="canonical" href="https://DOMINIO/">
+2. aggiungere og:url
+3. creare sitemap.xml con il dominio reale
+4. aggiornare robots.txt con Sitemap: https://DOMINIO/sitemap.xml
+5. collegare dominio e www su Vercel
+6. verificare Search Console dopo il lancio
+
+Il sito non contiene volutamente un dominio inventato o non ancora acquistato.
