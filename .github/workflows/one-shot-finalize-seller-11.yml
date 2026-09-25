@@ -1,0 +1,103 @@
+name: Finalize Seller OS 1.1 site
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - README.md
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Align Seller OS 1.1 commercial copy
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p=Path("index.html")
+          s=p.read_text(encoding="utf-8")
+
+          replacements=[
+            ("Seller OS 1.1 riunisce inventario, vendite, costi e profitti in un unico sistema pensato per chi vende online. €49 una tantum.",
+             "Seller OS 1.1 riunisce inventario, vendite, costi, profitti e storico pluriennale in un unico sistema pensato per chi vende online. €49 una tantum."),
+            ("Seller OS riunisce inventario, vendite, costi e profitti in un unico sistema pensato per chi vende online",
+             "Seller OS riunisce inventario, vendite, costi, profitti e storico pluriennale in un unico sistema pensato per chi vende online"),
+            ("Inventario, vendite, costi e profitti in un unico sistema pensato per chi vende online",
+             "Inventario, vendite, costi, profitti e storico pluriennale in un unico sistema pensato per chi vende online"),
+            ("Registra le vendite e consulta lo storico. Le informazioni che ti servono restano associate a ogni operazione.",
+             "Registra vendite, rimborsi e costi associati. Lo stock resta allineato anche nei rimborsi totali, con o senza rientro dell’articolo."),
+            ("Confronta vendite e costi per capire cosa resta alla tua attività. Margini e profitti ti aiutano a leggere i risultati.",
+             "Confronta vendite e costi sull’intero storico, passa dalla vista completa al confronto per anno e leggi margini, ROI e trend pluriennali."),
+            ("Margini, profitti e analytics","Storico completo, confronto annuale e trend"),
+            ("Registra le tue vendite","Registra vendite e rimborsi"),
+            ("Leggi margini e risultati","Leggi margini, trend e risultati"),
+            ("Analytics, KPI e report per capire come sta andando la tua attività",
+             "Analytics per anno, trend pluriennali, KPI e report per capire come sta andando la tua attività"),
+            ("Il foglio di lavoro per gestire la tua attività di vendita",
+             "Sistema Google Sheets + Apps Script con dashboard e storico pluriennale"),
+            ("I modelli per importare i tuoi dati",
+             "Tre template ufficiali per inventario, vendite e spese"),
+            ("Qui vedrai come funziona","Una panoramica del flusso operativo"),
+            ("Spazio riservato al filmato ufficiale","Demo guidata di Seller OS 1.1"),
+            ("Il video verrà inserito dopo l’approvazione del sito",
+             "Il video dimostrativo verrà pubblicato prima dell’apertura delle vendite"),
+            ("È un ambiente di lavoro in Google Sheets pensato per chi vende online. Ti aiuta a organizzare inventario, vendite, costi, spese e profitti, con analytics e report per leggere i tuoi dati.",
+             "È un sistema operativo in Google Sheets + Apps Script pensato per chi vende online. Organizza inventario, lotti, vendite, rimborsi, spese e profitti, con Dashboard, Analytics, Monitor DAC7 e Report anche su più anni."),
+            ("Sì, puoi importarli tramite CSV. Nel pacchetto trovi i template per preparare i file nel formato richiesto.",
+             "Sì. Puoi importare inventario, vendite e spese tramite CSV. Seller OS valida i dati prima della scrittura e il pacchetto include i template ufficiali aggiornati."),
+            (r"Confronta vendite e costi per capire cosa resta alla tua attivit\xE0. Margini e profitti ti aiutano a leggere i risultati.",
+             r"Confronta vendite e costi sull\u2019intero storico, passa dalla vista completa al confronto per anno e leggi margini, ROI e trend pluriennali."),
+            (r"Il foglio di lavoro per gestire la tua attivit\xE0 di vendita",
+             "Sistema Google Sheets + Apps Script con dashboard e storico pluriennale"),
+            (r"\xC8 un ambiente di lavoro in Google Sheets pensato per chi vende online. Ti aiuta a organizzare inventario, vendite, costi, spese e profitti, con analytics e report per leggere i tuoi dati.",
+             r"\xC8 un sistema operativo in Google Sheets + Apps Script pensato per chi vende online. Organizza inventario, lotti, vendite, rimborsi, spese e profitti, con Dashboard, Analytics, Monitor DAC7 e Report anche su pi\xF9 anni."),
+            (r"S\xEC, puoi importarli tramite CSV. Nel pacchetto trovi i template per preparare i file nel formato richiesto.",
+             r"S\xEC. Puoi importare inventario, vendite e spese tramite CSV. Seller OS valida i dati prima della scrittura e il pacchetto include i template ufficiali aggiornati."),
+            ("16 settembre 2026","25 settembre 2026"),
+          ]
+
+          total=0
+          for old,new in replacements:
+            n=s.count(old)
+            if n:
+              s=s.replace(old,new)
+              total+=n
+              print("replaced",n,old[:80])
+
+          if total == 0:
+            raise SystemExit("No expected copy found; refusing to change index.html")
+
+          if 'id="seller-price-promo-49"' not in s or 'content:"€79"' not in s or "€39" in s:
+            raise SystemExit("Pricing invariant failed")
+
+          p.write_text(s,encoding="utf-8")
+
+          for name in ["termini.html","privacy.html","rimborsi.html","contatti.html"]:
+            q=Path(name)
+            if q.exists():
+              t=q.read_text(encoding="utf-8")
+              t=t.replace("17 settembre 2026","25 settembre 2026")
+              q.write_text(t,encoding="utf-8")
+
+          print("homepage replacements:",total)
+          PY
+
+      - name: Commit finalized site
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html termini.html privacy.html rimborsi.html contatti.html; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "seller-os-release-bot"
+          git config user.email "seller.os001@gmail.com"
+          git add index.html termini.html privacy.html rimborsi.html contatti.html
+          git commit -m "chore: finalize Seller OS 1.1 commercial site"
+          git push
