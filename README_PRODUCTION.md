@@ -1,20 +1,47 @@
-# Seller OS — Production PRE-LEMON
+# Seller OS 1.1 — Production Checkout
 
-Questa è la versione derivata dal master design approvato.
+Seller OS usa l'architettura commerciale congelata di HOST OS 1.2, mantenendo separati branding, prodotto, Customer Pack e dati operativi.
 
-## Già completato
-- design master preservato
-- robots index/follow
-- descrizione SEO aggiornata
-- Open Graph / Twitter image
-- pagine reali: /contatti, /termini, /privacy, /rimborsi
-- email seller.os001@gmail.com
-- pagina 404
-- configurazione Vercel con clean URLs
-- checkout lasciato intenzionalmente non attivo
+## Flusso commerciale
 
-## Da NON fare ancora
-Non collegare pagamenti reali finché Lemon Squeezy non è configurato e testato.
+Landing → Carrello → Checkout → Ordine → PayPal link oppure Bonifico → `PAGAMENTO_DA_VERIFICARE` → verifica manuale admin → `PAGATO` / `CONSEGNATO` → e-mail → download protetto
 
-## Dopo il dominio
-Aggiornare canonical, og:url e sitemap con l'URL reale.
+## Prezzo
+
+- €49 una tantum
+- €79 prezzo precedente barrato
+- nessun abbonamento
+
+## Stati ordine
+
+- IN_ATTESA_PAGAMENTO
+- PAGAMENTO_DA_VERIFICARE
+- PAGATO
+- CONSEGNATO
+- ANNULLATO
+- RIMBORSATO
+
+## Infrastruttura
+
+- Vercel
+- PostgreSQL / Neon
+- PayPal link con verifica manuale
+- bonifico con verifica manuale
+- admin protetto
+- Resend
+- Vercel Blob privato
+- download tokenizzato valido 7 giorni
+- massimo 5 download
+
+## Tabelle
+
+- seller_orders
+- seller_webhook_events
+
+## Sicurezza
+
+Il Customer Pack, il link Google Sheets /copy e i segreti di produzione non devono essere pubblicati nel repository
+
+## Stato
+
+Codice checkout derivato dalla Production Master HOST OS 1.2. La release Seller OS diventa Production Master solo dopo configurazione environment, Blob, Neon e test E2E completi
