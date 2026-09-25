@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+node_modules/
+.vercel/
+*.log
+private-products/
+SELLER_OS_1.1_CUSTOMER_PACK_DEFINITIVO.zip
