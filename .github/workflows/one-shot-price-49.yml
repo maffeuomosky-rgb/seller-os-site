@@ -1,0 +1,99 @@
+name: One-shot Seller OS price 49
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'chore: set Seller OS launch price to 49'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set launch pricing
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p = Path("index.html")
+          s = p.read_text(encoding="utf-8")
+          original = s
+
+          # Visible/static HTML + legal copy
+          s = s.replace("€39", "€49")
+
+          # Inlined React bundle
+          s = s.replace(r"\u20AC39", r"\u20AC49")
+          s = s.replace("n*39", "n*49")
+
+          marker = 'id="seller-price-promo-49"'
+          if marker not in s:
+              css = """<style id="seller-price-promo-49">
+          .cta-price{display:inline-flex!important;align-items:center;gap:8px}
+          .cta-price::before{
+            content:"€79";
+            color:rgba(255,255,255,.68);
+            font-size:.78em;
+            font-weight:450;
+            text-decoration:line-through;
+            text-decoration-thickness:1.5px;
+            text-decoration-color:currentColor;
+          }
+          .price{display:flex!important;align-items:baseline;gap:18px;flex-wrap:wrap}
+          .price::before{
+            content:"€79";
+            color:var(--muted);
+            font-size:30px;
+            line-height:1;
+            font-weight:450;
+            letter-spacing:-.03em;
+            text-decoration:line-through;
+            text-decoration-thickness:2px;
+          }
+          .footer-product-link small::before{
+            content:"€79";
+            margin-right:7px;
+            color:var(--muted);
+            text-decoration:line-through;
+            text-decoration-thickness:1.5px;
+          }
+          @media(max-width:767px){
+            .price{gap:12px}
+            .price::before{font-size:24px}
+            .cta-price{gap:6px}
+          }
+          </style>"""
+              s = s.replace("</head>", css + "</head>", 1)
+
+          if s == original:
+              raise SystemExit("No pricing changes applied; refusing to commit")
+
+          p.write_text(s, encoding="utf-8")
+
+          # Standalone legal page
+          tp = Path("termini.html")
+          if tp.exists():
+              t = tp.read_text(encoding="utf-8")
+              t = t.replace("€39", "€49")
+              tp.write_text(t, encoding="utf-8")
+
+          print("Seller OS pricing updated: €79 struck through -> €49")
+          PY
+
+      - name: Commit pricing update
+        shell: bash
+        run: |
+          if git diff --quiet -- index.html termini.html; then
+            echo "No changes"
+            exit 0
+          fi
+          git config user.name "seller-os-release-bot"
+          git config user.email "seller.os001@gmail.com"
+          git add index.html termini.html
+          git commit -m "chore: set Seller OS launch price to 49"
+          git push
