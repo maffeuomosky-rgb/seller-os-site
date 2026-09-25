@@ -1,0 +1,17 @@
+{
+  "name": "seller-os-checkout",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node --check checkout.js && node --check ordine.js && node --check admin.js && node --check lib/core.js && node --check lib/http.js && node --check lib/db.js && node --check lib/paypal.js && node --check lib/payment-links.js && node --check lib/email.js && node --check lib/delivery.js && node --check lib/admin-auth.js && node --check lib/product.js && node --check lib/rate-limit.js && node --check api/config.js && node --check api/orders.js && node --check api/order-status.js && node --check api/bank-notify.js && node --check api/paypal-link-notify.js && node --check api/download.js && node --check api/admin-login.js && node --check api/admin-session.js && node --check api/admin-orders.js && node --check api/admin-action.js && node --check api/health.js && node --check scripts/upload-product.mjs && node --check api/order-download.js"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.3.0",
+    "pg": "^8.16.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
