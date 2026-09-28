@@ -1,0 +1,178 @@
+/* =========================================================
+   SELLER OS 1.1 — UI FIXES
+   LED workflow + premium FAQ controls
+   Loaded after styles.css
+   ========================================================= */
+
+/* ---------- FLOW LED ---------- */
+
+#come-funziona .flow-led-segments{
+  opacity:1!important;
+  visibility:visible!important;
+  display:grid!important;
+  pointer-events:none!important;
+}
+
+#come-funziona .flow-led-segment{
+  position:relative;
+  z-index:2;
+  height:3px;
+  border-radius:999px;
+  overflow:visible;
+  background:linear-gradient(180deg,#eef1f4 0%,#dfe4e9 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255,255,255,.95),
+    0 1px 3px rgba(32,42,55,.06);
+}
+
+#come-funziona .flow-led-fill{
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background:linear-gradient(
+    90deg,
+    #d1ff58 0%,
+    #b7ff19 22%,
+    #a8f703 58%,
+    #8fdc00 100%
+  );
+  transform:scaleX(0);
+  transform-origin:left center;
+  box-shadow:
+    0 0 5px rgba(183,255,25,.95),
+    0 0 12px rgba(168,247,3,.58),
+    0 0 24px rgba(168,247,3,.22);
+  will-change:transform;
+}
+
+#come-funziona .flow-led-segment.is-complete .flow-led-fill{
+  box-shadow:
+    0 0 7px rgba(183,255,25,1),
+    0 0 16px rgba(168,247,3,.64),
+    0 0 28px rgba(168,247,3,.22);
+}
+
+#come-funziona .flow-led-head{
+  width:8px;
+  height:8px;
+  border:1.5px solid #fff;
+  border-radius:50%;
+  background:#d4ff61;
+  box-shadow:
+    0 0 5px rgba(212,255,97,1),
+    0 0 13px rgba(183,255,25,.85),
+    0 0 24px rgba(168,247,3,.36);
+  opacity:0;
+  transition:
+    opacity .16s ease,
+    box-shadow .18s ease;
+}
+
+#come-funziona .flow-led-segment.is-current-segment .flow-led-head{
+  opacity:1;
+}
+
+#come-funziona .flow-line li.is-reached .flow-node::after{
+  background:#a8f703;
+  box-shadow:
+    0 0 7px rgba(168,247,3,.82),
+    0 0 15px rgba(168,247,3,.32);
+}
+
+#come-funziona .flow-line li.is-current .flow-node{
+  box-shadow:
+    0 0 0 5px #fff,
+    0 0 0 9px rgba(168,247,3,.12),
+    0 0 22px rgba(168,247,3,.16)!important;
+}
+
+@media(max-width:767px){
+  #come-funziona .flow-led-segment{
+    width:3px;
+    height:auto;
+  }
+
+  #come-funziona .flow-led-fill{
+    background:linear-gradient(
+      180deg,
+      #d1ff58 0%,
+      #b7ff19 22%,
+      #a8f703 58%,
+      #8fdc00 100%
+    );
+    transform:scaleY(0);
+    transform-origin:center top;
+  }
+}
+
+/* ---------- PREMIUM FAQ ICONS ---------- */
+
+.faq-trigger .faq-icon{
+  position:relative;
+  flex:0 0 32px;
+  width:32px;
+  height:32px;
+  display:grid;
+  place-items:center;
+  border:1px solid rgba(21,27,35,.11);
+  border-radius:50%;
+  background:rgba(255,255,255,.72);
+  box-shadow:0 5px 14px rgba(32,44,61,.035);
+  transform:none!important;
+  transition:
+    border-color .22s ease,
+    background-color .22s ease,
+    box-shadow .22s ease,
+    transform .28s cubic-bezier(.22,1,.36,1)!important;
+}
+
+.faq-trigger .faq-icon::before,
+.faq-trigger .faq-icon::after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:11px;
+  height:1.5px;
+  border-radius:999px;
+  background:#525d69;
+  transform:translate(-50%,-50%);
+  transition:
+    opacity .2s ease,
+    transform .28s cubic-bezier(.22,1,.36,1),
+    background-color .2s ease;
+}
+
+.faq-trigger .faq-icon::after{
+  transform:translate(-50%,-50%) rotate(90deg);
+}
+
+.faq-trigger:hover .faq-icon{
+  border-color:rgba(133,199,0,.30);
+  background:rgba(168,247,3,.055);
+  box-shadow:0 7px 20px rgba(91,126,27,.07);
+}
+
+.faq-trigger[aria-expanded="true"] .faq-icon{
+  border-color:rgba(133,199,0,.38);
+  background:rgba(168,247,3,.10);
+  box-shadow:0 0 0 4px rgba(168,247,3,.055);
+  transform:rotate(180deg)!important;
+}
+
+.faq-trigger[aria-expanded="true"] .faq-icon::before{
+  background:#6c9f00;
+}
+
+.faq-trigger[aria-expanded="true"] .faq-icon::after{
+  opacity:0;
+  transform:translate(-50%,-50%) rotate(90deg) scaleX(.15);
+}
+
+@media(max-width:767px){
+  .faq-trigger .faq-icon{
+    flex-basis:30px;
+    width:30px;
+    height:30px;
+  }
+}
