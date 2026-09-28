@@ -96,15 +96,169 @@
     if (index !== activeFeature) renderFeature(index);
   }
 
+  /* =========================================================
+     SELLER OS — Pinned LED workflow
+     ========================================================= */
+
   const flowSection = $('#come-funziona');
-  const flowFill = $('.flow-fill');
+
+  function buildLedRail(section) {
+    const track = $('.flow-track', section);
+    const steps = $$('.flow-line li', section);
+
+    if (!track || steps.length !== 6) return null;
+
+    let rail = $('.flow-led-segments', track);
+
+    if (!rail) {
+      rail = document.createElement('div');
+      rail.className = 'flow-led-segments';
+      rail.setAttribute('aria-hidden', 'true');
+
+      for (let i = 0; i < 5; i++) {
+        const segment = document.createElement('span');
+        segment.className = 'flow-led-segment';
+
+        const fill = document.createElement('span');
+        fill.className = 'flow-led-fill';
+
+        const head = document.createElement('span');
+        head.className = 'flow-led-head';
+
+        segment.appendChild(fill);
+        segment.appendChild(head);
+        rail.appendChild(segment);
+      }
+
+      track.insertBefore(rail, $('.flow-line', track));
+    }
+
+    return {
+      track,
+      steps,
+      rail,
+      segments: $$('.flow-led-segment', rail)
+    };
+  }
+
+  const flowState = flowSection ? buildLedRail(flowSection) : null;
+
+  function positionFlowRail() {
+    if (!flowState) return;
+
+    const { track, steps, rail } = flowState;
+    const nodes = steps.map(step => $('.flow-node', step));
+
+    if (nodes.some(node => !node)) return;
+
+    const trackRect = track.getBoundingClientRect();
+    const first = nodes[0].getBoundingClientRect();
+    const last = nodes[nodes.length - 1].getBoundingClientRect();
+    const mobile = window.matchMedia('(max-width:767px)').matches;
+
+    const startX = first.left + first.width / 2 - trackRect.left;
+    const startY = first.top + first.height / 2 - trackRect.top;
+    const endX = last.left + last.width / 2 - trackRect.left;
+    const endY = last.top + last.height / 2 - trackRect.top;
+
+    if (mobile) {
+      rail.style.left = `${startX - 1.5}px`;
+      rail.style.top = `${startY}px`;
+      rail.style.width = '3px';
+      rail.style.height = `${Math.max(0, endY - startY)}px`;
+      rail.style.gridTemplateRows = 'repeat(5,minmax(0,1fr))';
+      rail.style.gridTemplateColumns = '1fr';
+    } else {
+      rail.style.left = `${startX}px`;
+      rail.style.top = `${startY - 1.5}px`;
+      rail.style.width = `${Math.max(0, endX - startX)}px`;
+      rail.style.height = '3px';
+      rail.style.gridTemplateColumns = 'repeat(5,minmax(0,1fr))';
+      rail.style.gridTemplateRows = '1fr';
+    }
+  }
+
   function updateFlow() {
-    if (!flowSection || !flowFill) return;
+    if (!flowSection || !flowState) return;
+
+    positionFlowRail();
+
     const rect = flowSection.getBoundingClientRect();
-    const start = window.innerHeight * .82;
-    const end = window.innerHeight * .22;
-    const p = clamp((start - rect.top) / Math.max(1, rect.height + start - end));
-    flowFill.style.transform = 'scaleX(' + p + ')';
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const mobile = window.matchMedia('(max-width:767px)').matches;
+    const stickyTop = mobile ? 62 : 68;
+    const stickyViewport = Math.max(1, vh - stickyTop);
+    const scrollDistance = Math.max(1, rect.height - stickyViewport);
+
+    const raw = clamp(
+      (stickyTop - rect.top) / scrollDistance,
+      0,
+      1
+    );
+
+    const START = 0.05;
+    const END = 0.86;
+
+    const story = clamp(
+      (raw - START) / (END - START),
+      0,
+      1
+    );
+
+    const segmentValue = story * 5;
+
+    flowState.segments.forEach((segment, index) => {
+      const local = clamp(segmentValue - index, 0, 1);
+      const fill = $('.flow-led-fill', segment);
+      const head = $('.flow-led-head', segment);
+
+      if (fill) {
+        fill.style.transform = mobile
+          ? `scaleY(${local.toFixed(4)})`
+          : `scaleX(${local.toFixed(4)})`;
+      }
+
+      if (head) {
+        if (mobile) {
+          head.style.top = `${(local * 100).toFixed(2)}%`;
+          head.style.left = '50%';
+        } else {
+          head.style.left = `${(local * 100).toFixed(2)}%`;
+          head.style.top = '50%';
+        }
+      }
+
+      segment.classList.toggle('is-complete', local >= 0.999);
+      segment.classList.toggle(
+        'is-current-segment',
+        local > 0.015 && local < 0.999
+      );
+    });
+
+    let currentNode = Math.min(
+      5,
+      Math.floor(segmentValue + 0.0001)
+    );
+
+    if (story >= 0.999) currentNode = 5;
+
+    flowState.steps.forEach((step, index) => {
+      const reached =
+        story > 0
+          ? index <= currentNode
+          : index === 0 && raw >= START;
+
+      step.classList.toggle('is-reached', reached);
+      step.classList.toggle(
+        'is-current',
+        reached && index === currentNode
+      );
+    });
+
+    flowSection.classList.toggle(
+      'flow-complete',
+      story >= 0.999
+    );
   }
 
   let ticking = false;
