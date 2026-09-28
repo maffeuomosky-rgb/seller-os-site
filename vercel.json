@@ -47,7 +47,7 @@
       ]
     },
     {
-      "source": "/checkout(.*)",
+      "source": "/checkout",
       "headers": [
         {
           "key": "Cache-Control",
