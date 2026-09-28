@@ -11,7 +11,7 @@ function showError(msg){errorBox.textContent=msg;errorBox.classList.add('show')}
 function clearError(){errorBox.textContent='';errorBox.classList.remove('show')}
 function esc(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 async function api(url, options={}){const r=await fetch(url,{headers:{'Content-Type':'application/json',...(options.headers||{})},...options});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.message||d.error||'Operazione non riuscita');return d}
-function validateForm(){const method=form.paymentMethod.value;button.disabled=!(form.firstName.value.trim().length>1 && form.lastName.value.trim().length>1 && form.email.value.includes('@') && form.email.value.trim().toLowerCase()===form.emailConfirm.value.trim().toLowerCase() && method && $('#consentTerms').checked && $('#consentImmediate').checked)}
+function validateForm(){const method=form.paymentMethod.value;button.disabled=!(form.firstName.value.trim().length>1 && form.lastName.value.trim().length>1 && form.email.value.includes('@') && form.email.value.trim().toLowerCase()===form.emailConfirm.value.trim().toLowerCase() && method && $('#consentTerms').checked && $('#consentImmediate').checked && $('#consentWithdrawalLoss').checked)}
 form.addEventListener('input',validateForm);form.addEventListener('change',validateForm);
 
 async function loadConfig(){
@@ -21,8 +21,8 @@ async function loadConfig(){
 form.addEventListener('submit',async e=>{
   e.preventDefault();clearError();validateForm();if(button.disabled)return;
   button.disabled=true;button.textContent='Creo il tuo ordine…';
-  const payload={name:`${form.firstName.value.trim()} ${form.lastName.value.trim()}`.trim(),email:form.email.value,emailConfirm:form.emailConfirm.value,paymentMethod:form.paymentMethod.value,consentTerms:$('#consentTerms').checked,consentImmediateDelivery:$('#consentImmediate').checked,marketingConsent:$('#marketing').checked,website:form.website.value};
-  try{document.querySelector('[data-step="2"]')?.classList.add('active');currentOrder=await api('/api/orders',{method:'POST',body:JSON.stringify(payload)});form.querySelectorAll('input').forEach(x=>x.disabled=true);button.style.display='none';paymentArea.classList.add('show');if(currentOrder.paymentMethod==='bank')renderBank(currentOrder);else await renderPayPal(currentOrder)}catch(err){showError(mapError(err.message));button.disabled=false;button.textContent='Continua al pagamento'}
+  const payload={name:`${form.firstName.value.trim()} ${form.lastName.value.trim()}`.trim(),email:form.email.value,emailConfirm:form.emailConfirm.value,paymentMethod:form.paymentMethod.value,consentTerms:$('#consentTerms').checked,consentImmediateDelivery:$('#consentImmediate').checked,consentWithdrawalLoss:$('#consentWithdrawalLoss').checked,marketingConsent:$('#marketing').checked,website:form.website.value};
+  try{document.querySelector('[data-step="2"]')?.classList.add('active');currentOrder=await api('/api/orders',{method:'POST',body:JSON.stringify(payload)});form.querySelectorAll('input').forEach(x=>x.disabled=true);button.style.display='none';paymentArea.classList.add('show');if(currentOrder.paymentMethod==='bank')renderBank(currentOrder);else await renderPayPal(currentOrder)}catch(err){showError(mapError(err.message));button.disabled=false;button.textContent='Ordina con obbligo di pagare'}
 });
 
 function mapError(code){const m={EMAIL_MISMATCH:'Le due e-mail non coincidono.',EMAIL_INVALID:'Inserisci un indirizzo e-mail valido.',CONSENT_REQUIRED:'Per continuare devi accettare le condizioni obbligatorie.',PAYPAL_NOT_CONFIGURED:'PayPal non è ancora configurato.',BANK_NOT_CONFIGURED:'Il bonifico non è ancora configurato.',DATABASE_URL:'Il checkout non è ancora pronto.'};return m[code]||code||'Operazione non riuscita.'}
