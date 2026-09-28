@@ -3052,4 +3052,60 @@ Error generating stack: `+i.message+`
   setTimeout(patchPreLaunchCopy, 500);
 })();
 </script>
+
+<style id="seller-os-checkout-production-style">
+  .checkout-disabled.seller-checkout-live{
+    background:var(--green)!important;
+    color:var(--ink)!important;
+    cursor:pointer!important;
+    opacity:1!important;
+    transition:transform .18s ease,filter .18s ease!important
+  }
+  .checkout-disabled.seller-checkout-live:hover{
+    transform:translateY(-1px);
+    filter:brightness(.98)
+  }
+</style>
+<script id="seller-os-checkout-production-bridge">
+(function(){
+  function activateProductionCheckout(){
+    document.querySelectorAll('.checkout-disabled').forEach(function(btn){
+      if(btn.disabled) btn.disabled = false;
+      btn.removeAttribute('disabled');
+      btn.setAttribute('aria-disabled','false');
+      btn.classList.add('seller-checkout-live');
+    });
+
+    document.querySelectorAll('.cart-notice').forEach(function(el){
+      el.textContent = 'Pagamento una tantum · PayPal o bonifico · consegna protetta dopo verifica del pagamento';
+    });
+
+    document.querySelectorAll('.pricing-reassurance small').forEach(function(el){
+      el.textContent = 'PayPal o bonifico · pagamento una tantum';
+    });
+  }
+
+  document.addEventListener('click', function(event){
+    var button = event.target.closest('.checkout-disabled');
+    if(!button) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    window.location.href = '/checkout';
+  }, true);
+
+  var observer = new MutationObserver(activateProductionCheckout);
+  observer.observe(document.documentElement, {
+    childList:true,
+    subtree:true,
+    attributes:true,
+    attributeFilter:['disabled']
+  });
+
+  activateProductionCheckout();
+  setTimeout(activateProductionCheckout,100);
+  setTimeout(activateProductionCheckout,650);
+})();
+</script>
+
 </body></html>
