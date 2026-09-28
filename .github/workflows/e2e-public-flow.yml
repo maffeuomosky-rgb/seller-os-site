@@ -1,0 +1,69 @@
+name: Seller OS E2E Public Flow
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/e2e-public-flow.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  public-flow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create and advance E2E order
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://seller-os-site-eight.vercel.app"
+
+          CONFIG="$(curl -fsS "$BASE/api/config")"
+          EMAIL="$(printf '%s' "$CONFIG" | jq -r '.supportEmail')"
+          test -n "$EMAIL"
+          test "$EMAIL" != "null"
+
+          CREATE="$(curl -fsS -X POST "$BASE/api/orders"             -H "Content-Type: application/json"             -H "Origin: $BASE"             --data "$(jq -nc --arg email "$EMAIL" '{
+              name:"E2E TEST SELLER OS",
+              email:$email,
+              emailConfirm:$email,
+              paymentMethod:"bank",
+              consentTerms:true,
+              consentImmediateDelivery:true,
+              marketingConsent:false,
+              website:""
+            }')")"
+
+          ORDER_ID="$(printf '%s' "$CREATE" | jq -r '.orderId')"
+          CUSTOMER_TOKEN="$(printf '%s' "$CREATE" | jq -r '.customerToken')"
+          CREATE_STATUS="$(printf '%s' "$CREATE" | jq -r '.status')"
+          test -n "$ORDER_ID"
+          test -n "$CUSTOMER_TOKEN"
+          test "$CREATE_STATUS" = "IN_ATTESA_PAGAMENTO"
+
+          BEFORE="$(curl -fsS "$BASE/api/order-status?id=$(printf '%s' "$ORDER_ID" | jq -sRr @uri)&token=$(printf '%s' "$CUSTOMER_TOKEN" | jq -sRr @uri)")"
+          test "$(printf '%s' "$BEFORE" | jq -r '.orderStatus')" = "IN_ATTESA_PAGAMENTO"
+          test "$(printf '%s' "$BEFORE" | jq -r '.paymentStatus')" = "PENDING"
+
+          NOTIFY="$(curl -fsS -X POST "$BASE/api/bank-notify"             -H "Content-Type: application/json"             -H "Origin: $BASE"             --data "$(jq -nc --arg id "$ORDER_ID" --arg token "$CUSTOMER_TOKEN" '{orderId:$id,customerToken:$token}')")"
+          test "$(printf '%s' "$NOTIFY" | jq -r '.status')" = "PAGAMENTO_DA_VERIFICARE"
+
+          AFTER="$(curl -fsS "$BASE/api/order-status?id=$(printf '%s' "$ORDER_ID" | jq -sRr @uri)&token=$(printf '%s' "$CUSTOMER_TOKEN" | jq -sRr @uri)")"
+          test "$(printf '%s' "$AFTER" | jq -r '.orderStatus')" = "PAGAMENTO_DA_VERIFICARE"
+          test "$(printf '%s' "$AFTER" | jq -r '.paymentStatus')" = "PENDING"
+          test "$(printf '%s' "$AFTER" | jq -r '.deliveryStatus')" = "NOT_READY"
+
+          echo "E2E_ORDER_ID=$ORDER_ID"
+          echo "E2E_RESULT=PASS"
+          {
+            echo "## Seller OS E2E public flow"
+            echo ""
+            echo "- Order: `$ORDER_ID`"
+            echo "- Create order: PASS"
+            echo "- Initial state: IN_ATTESA_PAGAMENTO"
+            echo "- Bank notify: PASS"
+            echo "- Final state: PAGAMENTO_DA_VERIFICARE"
+            echo "- Payment: PENDING"
+            echo "- Delivery: NOT_READY"
+          } >> "$GITHUB_STEP_SUMMARY"
