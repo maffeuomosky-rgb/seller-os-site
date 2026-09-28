@@ -22,8 +22,36 @@ if (!html.includes(marker)) {
   }
 
   html = html.replace('</head>', fallback + '</head>');
-  fs.writeFileSync(file, html, 'utf8');
   console.log('Seller OS landing critical render fallback applied');
 } else {
   console.log('Seller OS landing critical render fallback already present');
 }
+
+/*
+ * The landing already contains complete server-rendered markup.
+ * The old inline React hydration bundle is ~2.7 MB and is not required
+ * to display the commercial page. Removing it avoids blocking the HTML
+ * parser/main thread while keeping the lightweight production scripts
+ * for analytics motion, legal pages and checkout.
+ */
+const scriptRe = /<script\b[^>]*>[\s\S]*?<\/script>/gi;
+let removedHydration = false;
+html = html.replace(scriptRe, block => {
+  if (
+    !removedHydration &&
+    block.includes('hydrateRoot') &&
+    block.includes('getElementById("root")')
+  ) {
+    removedHydration = true;
+    console.log(`Seller OS landing React hydration bundle removed (${block.length} chars)`);
+    return '';
+  }
+  return block;
+});
+
+if (!removedHydration) {
+  throw new Error('Seller OS landing: React hydration bundle not found');
+}
+
+fs.writeFileSync(file, html, 'utf8');
+console.log(`Seller OS landing production HTML ready (${html.length} chars)`);
