@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#F7F8FC">
+<meta name="robots" content="noindex,nofollow">
+<title>Recesso online — Seller OS</title>
+<meta name="description" content="Funzione online per esercitare il diritto di recesso da un ordine Seller OS quando ancora disponibile">
+<style>
+:root{--bg:#F7F8FC;--surface:#fff;--text:#10131A;--muted:#6F7582;--border:#E6E9F1;--lime:#A8F703;--danger:#a83044}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.header{height:72px;border-bottom:1px solid var(--border);background:rgba(247,248,252,.94);display:flex;align-items:center}
+.header-inner,main,.footer-inner{width:min(900px,calc(100% - 56px));margin:auto}.header-inner{display:flex;align-items:center;justify-content:space-between}
+.brand{font-size:17px;font-weight:800;letter-spacing:-.04em;text-decoration:none;color:var(--text)}.brand b{color:#79B900}.back{font-size:13px;color:#59636F;text-decoration:none}
+main{padding:76px 0 100px}.kicker{font-size:11px;font-weight:800;letter-spacing:.13em;color:#7D8692}.hero h1{font-size:clamp(42px,6vw,68px);line-height:1;letter-spacing:-.05em;margin:14px 0 18px}.hero p{max-width:680px;color:var(--muted);font-size:17px;line-height:1.65}
+.card{margin-top:38px;background:#fff;border:1px solid var(--border);border-radius:22px;padding:28px;box-shadow:0 18px 55px -42px rgba(18,44,58,.35)}
+label{display:block;font-size:13px;font-weight:750;margin-bottom:8px}.field{width:100%;min-height:50px;border:1px solid #d9e4e9;border-radius:12px;padding:12px 14px;font:inherit;font-size:15px;outline:0}.field:focus{border-color:#8dcc10;box-shadow:0 0 0 4px rgba(168,247,3,.09)}
+.help{margin:9px 0 0;color:#7A8892;font-size:12px;line-height:1.55}.primary,.secondary{width:100%;min-height:50px;border-radius:12px;padding:0 18px;font:inherit;font-weight:800;cursor:pointer}.primary{border:0;background:linear-gradient(135deg,#bcff36,#92df00);color:#183000;margin-top:16px}.secondary{border:1px solid #dce5e9;background:#fff;color:#354d59;margin-top:10px}
+.result{margin-top:20px}.row{display:grid;grid-template-columns:130px 1fr;gap:12px;padding:11px 0;border-bottom:1px solid #e9eef1;font-size:13px}.row span{color:#71808a}.row strong{word-break:break-word}.notice{padding:14px 15px;border-radius:12px;background:#f6fafb;color:#536a76;font-size:13px;line-height:1.55;margin-top:14px}.success{background:#eff9e6;color:#446b00}.error{background:#fff0f2;color:var(--danger)}.footer{border-top:1px solid var(--border);padding:28px 0 42px;color:#7D8692;font-size:11px}
+[hidden]{display:none!important}
+@media(max-width:767px){.header-inner,main,.footer-inner{width:calc(100% - 32px)}main{padding:54px 0 74px}.card{padding:20px}.row{grid-template-columns:1fr;gap:4px}}
+</style>
+</head>
+<body>
+<header class="header"><div class="header-inner"><a class="brand" href="/">SELLER <b>OS</b></a><a class="back" href="/">← Torna al sito</a></div></header>
+<main>
+<section class="hero">
+<div class="kicker">FUNZIONE DI RECESSO ONLINE</div>
+<h1>Recedere dal contratto qui</h1>
+<p>Questa funzione consente di inviare online la dichiarazione di recesso per un ordine Seller OS quando il diritto è ancora esercitabile. La conferma viene inviata all’indirizzo e-mail associato all’ordine.</p>
+</section>
+<section class="card">
+<label for="order-link">Link personale dell’ordine</label>
+<input class="field" id="order-link" type="url" placeholder="Incolla il link ricevuto nell’e-mail dell’ordine" autocomplete="url">
+<p class="help">Il link personale contiene il numero ordine e il token necessario a identificare in modo sicuro il contratto. Non viene condiviso pubblicamente.</p>
+<button class="primary" id="load-order" type="button">Apri funzione di recesso</button>
+<div id="message" class="notice" hidden></div>
+<div id="result" class="result" hidden>
+  <div class="row"><span>Nome</span><strong id="customer-name"></strong></div>
+  <div class="row"><span>Ordine</span><strong id="order-id"></strong></div>
+  <div class="row"><span>Conferma a</span><strong id="order-email"></strong></div>
+  <div id="availability" class="notice"></div>
+  <div id="confirm-area" hidden>
+    <p class="notice">Se confermi, comunichi la tua decisione di recedere dal contratto relativo all’ordine indicato. La consegna digitale verrà bloccata.</p>
+    <button class="primary" id="confirm-withdrawal" type="button">Conferma recesso</button>
+  </div>
+</div>
+</section>
+</main>
+<footer class="footer"><div class="footer-inner">© 2026 SELLER OS · Supporto seller.os001@gmail.com</div></footer>
+<script>
+const $=s=>document.querySelector(s);let auth=null;
+function showMessage(text,type=''){const m=$('#message');m.textContent=text;m.className='notice '+type;m.hidden=false}
+function parseOrderLink(raw){const u=new URL(raw,location.origin);const id=u.searchParams.get('id'),token=u.searchParams.get('token');if(!id||!token)throw new Error('Il link ordine non contiene i dati necessari');return{id,token}}
+async function request(url,options={}){const r=await fetch(url,{headers:{'Content-Type':'application/json',...(options.headers||{})},cache:'no-store',...options});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Operazione non riuscita');return d}
+function render(o){$('#result').hidden=false;$('#customer-name').textContent=o.customerName;$('#order-id').textContent=o.id;$('#order-email').textContent=o.email;const a=$('#availability'),c=$('#confirm-area');if(o.withdrawalRequestedAt){a.textContent='La dichiarazione di recesso risulta già ricevuta per questo ordine';a.className='notice success';c.hidden=true;return}if(o.canWithdraw){a.textContent='Il diritto di recesso risulta attualmente esercitabile per questo ordine';a.className='notice success';c.hidden=false;return}a.textContent='Il diritto di recesso non risulta attualmente esercitabile tramite questa funzione';a.className='notice';c.hidden=true}
+$('#load-order').addEventListener('click',async()=>{try{auth=parseOrderLink($('#order-link').value.trim());const o=await request('/api/order-status?id='+encodeURIComponent(auth.id)+'&token='+encodeURIComponent(auth.token),{method:'GET',headers:{}});$('#message').hidden=true;render(o)}catch(e){showMessage(e.message,'error')}})
+$('#confirm-withdrawal').addEventListener('click',async()=>{if(!auth)return;const b=$('#confirm-withdrawal');b.disabled=true;b.textContent='Invio recesso…';try{const o=await request('/api/order-status',{method:'POST',body:JSON.stringify({action:'withdraw',id:auth.id,token:auth.token})});render(o);showMessage('Recesso trasmesso. La conferma è stata inviata all’e-mail associata all’ordine.','success')}catch(e){showMessage(e.message==='DELIVERY_IN_PROGRESS'?'La consegna è in elaborazione. Riprova tra pochi secondi o contatta il supporto.':e.message,'error');b.disabled=false;b.textContent='Conferma recesso'}})
+</script>
+</body>
+</html>
