@@ -17,6 +17,10 @@
     {
       "source": "/rimborsi",
       "destination": "/rimborsi.html"
+    },
+    {
+      "source": "/recesso",
+      "destination": "/recesso.html"
     }
   ],
   "headers": [
