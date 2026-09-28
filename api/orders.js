@@ -20,13 +20,14 @@ export default async function handler(req, res) {
     const method = body.paymentMethod === 'bank' ? 'bank' : body.paymentMethod === 'paypal' ? 'paypal' : '';
     const consentTerms = body.consentTerms === true;
     const consentImmediate = body.consentImmediateDelivery === true;
+    const consentWithdrawalLoss = body.consentWithdrawalLoss === true;
     const marketing = body.marketingConsent === true;
 
     if (name.length < 2) return json(res, 400, { error: 'NAME_REQUIRED' });
     if (!isValidEmail(email)) return json(res, 400, { error: 'EMAIL_INVALID' });
     if (email !== emailConfirm) return json(res, 400, { error: 'EMAIL_MISMATCH' });
     if (!method) return json(res, 400, { error: 'PAYMENT_METHOD_REQUIRED' });
-    if (!consentTerms || !consentImmediate) return json(res, 400, { error: 'CONSENT_REQUIRED' });
+    if (!consentTerms || !consentImmediate || !consentWithdrawalLoss) return json(res, 400, { error: 'CONSENT_REQUIRED' });
     if (method === 'bank' && !(process.env.BANK_ACCOUNT_NAME && process.env.BANK_IBAN)) return json(res, 503, { error: 'BANK_NOT_CONFIGURED' });
     if (method === 'paypal' && !(process.env.PAYPAL_PAYMENT_URL || (process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET))) return json(res, 503, { error: 'PAYPAL_NOT_CONFIGURED' });
 
@@ -51,6 +52,7 @@ export default async function handler(req, res) {
           max_downloads: maxDownloads,
           consent_terms: true,
           consent_immediate_delivery: true,
+          consent_withdrawal_loss: true,
           marketing_consent: marketing
         });
         break;
