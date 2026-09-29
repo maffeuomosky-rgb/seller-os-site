@@ -53,6 +53,7 @@ export default async function handler(req, res) {
           consent_terms: true,
           consent_immediate_delivery: true,
           consent_withdrawal_loss: true,
+          legal_version: '2026-09-28-b2c-v1',
           marketing_consent: marketing
         });
         break;
@@ -92,7 +93,17 @@ export default async function handler(req, res) {
         await sendEmail({
           to: email,
           subject: `Ordine SELLER OS ricevuto · ${order.id}`,
-          html: orderReceivedEmailHtml({ customerName: name, orderId: order.id, orderUrl, paymentMethod: method, bank: payload.bank, paypal: payload.paypal })
+          html: orderReceivedEmailHtml({
+            customerName: name,
+            orderId: order.id,
+            orderUrl,
+            paymentMethod: method,
+            bank: payload.bank,
+            paypal: payload.paypal,
+            amountCents,
+            currency,
+            legalVersion: order.legal_version
+          })
         });
       } catch (emailError) { console.error('order acknowledgement email', emailError); }
     }
