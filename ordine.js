@@ -6,6 +6,27 @@ async function fetchStatus(){if(!id||!token)throw new Error('Link ordine non val
 function badge(s){const good=['PAGATO','CONSEGNATO'].includes(s),bad=['ANNULLATO','RIMBORSATO'].includes(s);return `<span class="co-pill ${good?'good':bad?'bad':'warn'}">${esc(s.replaceAll('_',' '))}</span>`}
 function copyButtons(){document.querySelectorAll('[data-copy]').forEach(b=>b.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(b.dataset.copy);b.textContent='Copiato'}catch{b.textContent='Copia manualmente'}}))}
 
+function paymentMethodLabel(method){return method==='bank'?'Bonifico bancario':method==='paypal'?'PayPal':String(method||'')}
+
+function paymentConfirmationBox(o){
+  if(!o.paidAt)return '';
+  const when=new Date(o.paidAt).toLocaleString('it-IT');
+  const current=o.paymentStatus==='REFUNDED'?' · successivamente rimborsato':'';
+  return `<div class="co-bank" style="margin-top:20px"><span class="co-kicker">CONFERMA PAGAMENTO</span><h3>Pagamento ricevuto</h3><div class="co-bank-row"><span>Ordine</span><code>${esc(o.id)}</code><span></span></div><div class="co-bank-row"><span>Importo</span><code>${money(o.amountCents,o.currency)}</code><span></span></div><div class="co-bank-row"><span>Metodo</span><code>${esc(paymentMethodLabel(o.paymentMethod))}</code><span></span></div><div class="co-bank-row"><span>Verificato</span><code>${esc(when)}${esc(current)}</code><span></span></div><p class="co-note">Questa conferma documenta la ricezione del pagamento relativo all’ordine indicato. Non costituisce fattura e non sostituisce eventuali documenti fiscali dovuti.</p><button id="print-payment-confirmation" class="co-secondary" type="button" style="width:100%">Stampa o salva la conferma</button></div>`;
+}
+
+function bindPaymentConfirmation(o){
+  const btn=$('#print-payment-confirmation');
+  if(!btn||!o.paidAt)return;
+  btn.addEventListener('click',()=>{
+    const when=new Date(o.paidAt).toLocaleString('it-IT');
+    const w=window.open('','_blank','noopener,noreferrer,width=760,height=760');
+    if(!w)return;
+    w.document.write(`<!doctype html><html lang="it"><head><meta charset="utf-8"><title>Conferma pagamento ${esc(o.id)}</title><style>body{font-family:Arial,sans-serif;color:#172832;padding:44px;line-height:1.55}h1{font-size:28px;margin:0 0 8px}.muted{color:#6d7b84}.box{margin-top:26px;border:1px solid #dce5e9;border-radius:14px;padding:20px}.row{display:flex;justify-content:space-between;gap:20px;padding:10px 0;border-bottom:1px solid #edf1f3}.row:last-child{border:0}small{display:block;margin-top:24px;color:#7c8991}@media print{button{display:none}}</style></head><body><div class="muted">SELLER OS 1.1</div><h1>Conferma pagamento ricevuto</h1><p class="muted">Conferma relativa all’ordine ${esc(o.id)}</p><div class="box"><div class="row"><span>Cliente</span><strong>${esc(o.customerName)}</strong></div><div class="row"><span>Ordine</span><strong>${esc(o.id)}</strong></div><div class="row"><span>Importo</span><strong>${money(o.amountCents,o.currency)}</strong></div><div class="row"><span>Metodo</span><strong>${esc(paymentMethodLabel(o.paymentMethod))}</strong></div><div class="row"><span>Pagamento verificato</span><strong>${esc(when)}</strong></div></div><small>Questa conferma documenta la ricezione del pagamento relativo all’ordine indicato. Non costituisce fattura e non sostituisce eventuali documenti fiscali dovuti.</small><script>window.onload=()=>window.print()<\/script></body></html>`);
+    w.document.close();
+  });
+}
+
 function withdrawalBox(o){
   if(o.withdrawalRequestedAt){
     const when=new Date(o.withdrawalRequestedAt).toLocaleString('it-IT');
@@ -53,8 +74,8 @@ function render(o){
   let download='';
   if(o.canDownload){const remaining=Math.max(0,Number(o.maxDownloads||0)-Number(o.downloadCount||0));const expiry=o.downloadExpiresAt?new Date(o.downloadExpiresAt).toLocaleString('it-IT'):'';download=`<div class="co-bank" style="margin-top:20px"><span class="co-kicker">CONSEGNA DIGITALE</span><h3>Il tuo Customer Pack è disponibile</h3><p class="co-note">Scarica il pacchetto completo SELLER OS 1.1. Il link resta protetto e collegato al tuo ordine.</p><a class="co-primary order-download" href="/api/order-download?id=${encodeURIComponent(o.id)}&token=${encodeURIComponent(token)}">Scarica SELLER OS 1.1</a><div class="order-download-meta">${remaining} download disponibili${expiry?` · valido fino al ${esc(expiry)}`:''}</div></div>`}
 
-  $('#order-box').innerHTML=`<div class="co-bank"><div class="co-bank-row"><span>Ordine</span><code>${esc(o.id)}</code><span></span></div><div class="co-bank-row"><span>Importo</span><code>${money(o.amountCents,o.currency)}</code><span></span></div><div class="co-bank-row"><span>Metodo</span><code>${o.paymentMethod==='bank'?'Bonifico bancario':'PayPal'}</code><span></span></div><div class="co-bank-row"><span>E-mail</span><code>${esc(o.email)}</code><span></span></div><div class="co-bank-row"><span>Stato</span><div>${badge(o.orderStatus)}</div><span></span></div></div>${download}${details}${withdrawalBox(o)}<p class="co-note">Questa pagina si aggiorna automaticamente. Conserva il link dell’ordine finché non hai completato il download o la gestione dell’ordine.</p>`;
-  copyButtons();bindWithdrawal();if(['ANNULLATO','RIMBORSATO'].includes(o.orderStatus)){clearInterval(timer);timer=null}
+  $('#order-box').innerHTML=`<div class="co-bank"><div class="co-bank-row"><span>Ordine</span><code>${esc(o.id)}</code><span></span></div><div class="co-bank-row"><span>Importo</span><code>${money(o.amountCents,o.currency)}</code><span></span></div><div class="co-bank-row"><span>Metodo</span><code>${o.paymentMethod==='bank'?'Bonifico bancario':'PayPal'}</code><span></span></div><div class="co-bank-row"><span>E-mail</span><code>${esc(o.email)}</code><span></span></div><div class="co-bank-row"><span>Stato</span><div>${badge(o.orderStatus)}</div><span></span></div></div>${download}${details}${paymentConfirmationBox(o)}${withdrawalBox(o)}<p class="co-note">Questa pagina si aggiorna automaticamente. Conserva il link dell’ordine finché non hai completato il download o la gestione dell’ordine.</p>`;
+  copyButtons();bindPaymentConfirmation(o);bindWithdrawal();if(['ANNULLATO','RIMBORSATO'].includes(o.orderStatus)){clearInterval(timer);timer=null}
 }
 async function refresh(){try{render(await fetchStatus())}catch(e){$('#order-error').textContent=e.message;$('#order-error').classList.add('show');clearInterval(timer)}}
 refresh();timer=setInterval(refresh,5000);
