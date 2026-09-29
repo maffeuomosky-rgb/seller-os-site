@@ -13,6 +13,8 @@ export default async function handler(req, res) {
       amountCents:o.amount_cents, currency:o.currency, orderStatus:o.order_status,
       paymentStatus:o.payment_status, deliveryStatus:o.delivery_status, paypalOrderId:o.paypal_order_id,
       downloadCount:o.download_count, maxDownloads:o.max_downloads, deliveryError:o.delivery_error,
+      withdrawalRequestedAt:o.withdrawal_requested_at, withdrawalReceiptEmailAt:o.withdrawal_receipt_email_at,
+      withdrawalReceiptError:o.withdrawal_receipt_error,
       createdAt:o.created_at, paidAt:o.paid_at, deliveredAt:o.delivered_at
     })) });
   } catch (error) {
