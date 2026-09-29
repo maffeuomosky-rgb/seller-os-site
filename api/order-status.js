@@ -11,6 +11,7 @@ function withdrawalInfo(order) {
   const unavailableState = ['CONSEGNATO','ANNULLATO','RIMBORSATO'].includes(order.order_status);
   const canWithdraw = !order.withdrawal_requested_at
     && !order.delivered_at
+    && !order.download_token_hash
     && !unavailableState
     && order.delivery_status !== 'PROCESSING'
     && Date.now() < endsAt.getTime();
@@ -45,6 +46,7 @@ function publicPayload(order) {
     downloadExpiresAt: order.download_expires_at,
     downloadCount: Number(order.download_count || 0),
     maxDownloads: Number(order.max_downloads || 0),
+    legalVersion: order.legal_version || null,
     ...withdrawal
   };
 
