@@ -72,3 +72,20 @@
     padding:16px 20px 10px;
   }
 }
+
+
+/* B2C pre-order summary */
+.co-order-review{
+  margin:4px 0 16px;
+  padding:15px 16px;
+  border:1px solid var(--co-line);
+  border-radius:13px;
+  background:#f8fbfc;
+  display:grid;
+  gap:6px;
+  color:#536a76;
+  font-size:12px;
+  line-height:1.45
+}
+.co-order-review strong{color:#173645;font-size:13px}
+.co-order-review span{display:block}
