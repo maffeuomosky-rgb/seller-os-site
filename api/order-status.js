@@ -6,8 +6,8 @@ import { buildPayPalPaymentUrl } from '../lib/payment-links.js';
 import { allowRequest } from '../lib/rate-limit.js';
 
 function withdrawalInfo(order) {
-  const createdAt = new Date(order.created_at);
-  const endsAt = new Date(createdAt.getTime() + 14 * 86400_000);
+  const startAt = new Date(order.paid_at || order.created_at);
+  const endsAt = new Date(startAt.getTime() + 14 * 86400_000);
   const unavailableState = ['CONSEGNATO','ANNULLATO','RIMBORSATO'].includes(order.order_status);
   const canWithdraw = !order.withdrawal_requested_at
     && !order.delivered_at
